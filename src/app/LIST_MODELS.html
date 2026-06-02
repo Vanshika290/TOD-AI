@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>List Available Models</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        button {
+            background: linear-gradient(to right, #8b5cf6, #ec4899);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .success {
+            background: #d1fae5;
+            border: 1px solid #10b981;
+            color: #065f46;
+        }
+        .error {
+            background: #fee2e2;
+            border: 1px solid #ef4444;
+            color: #991b1b;
+        }
+        .loading {
+            background: #dbeafe;
+            border: 1px solid #3b82f6;
+            color: #1e40af;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .model-card {
+            background: #f9fafb;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 6px;
+            border-left: 4px solid #8b5cf6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 List Available Gemini Models</h1>
+        <p>This will show you which models are available with your API key.</p>
+        
+        <label for="apiKey"><strong>Your API Key:</strong></label>
+        <input 
+            type="text" 
+            id="apiKey" 
+            value="AIzaSyA2UuRudE2NW0bQ4wOiquVoQ4I_2koQ4uI"
+            placeholder="Paste your API key here"
+        />
+        
+        <button onclick="listModels()">📋 List Available Models</button>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function listModels() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const resultDiv = document.getElementById('result');
+            
+            if (!apiKey) {
+                resultDiv.className = 'error';
+                resultDiv.textContent = '❌ Please enter an API key first!';
+                return;
+            }
+            
+            resultDiv.className = 'loading';
+            resultDiv.textContent = '⏳ Fetching available models...\n\nPlease wait...';
+            
+            try {
+                console.log('Fetching models with key:', apiKey.substring(0, 10) + '...');
+                
+                // Try v1beta API
+                const response = await fetch(
+                    `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`,
+                    {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    }
+                );
+                
+                console.log('Response status:', response.status);
+                const data = await response.json();
+                console.log('Response data:', data);
+                
+                if (data.error) {
+                    resultDiv.className = 'error';
+                    resultDiv.textContent = `❌ ERROR\n\nStatus: ${response.status}\nError: ${data.error.message}\n\n📋 Full Response:\n${JSON.stringify(data, null, 2)}`;
+                } else if (data.models && data.models.length > 0) {
+                    // Success! Display models
+                    resultDiv.className = 'success';
+                    let output = `✅ FOUND ${data.models.length} MODELS!\n\n`;
+                    output += '=' .repeat(60) + '\n\n';
+                    
+                    // Filter for generateContent models
+                    const generateModels = data.models.filter(model => 
+                        model.supportedGenerationMethods && 
+                        model.supportedGenerationMethods.includes('generateContent')
+                    );
+                    
+                    output += `🎯 MODELS THAT SUPPORT generateContent (${generateModels.length}):\n\n`;
+                    
+                    generateModels.forEach((model, index) => {
+                        output += `${index + 1}. ${model.name}\n`;
+                        output += `   Display Name: ${model.displayName || 'N/A'}\n`;
+                        output += `   Description: ${model.description || 'N/A'}\n`;
+                        output += `   Methods: ${model.supportedGenerationMethods.join(', ')}\n`;
+                        output += '\n';
+                    });
+                    
+                    output += '=' .repeat(60) + '\n\n';
+                    output += `💡 USE THIS MODEL NAME IN YOUR CODE:\n\n`;
+                    
+                    if (generateModels.length > 0) {
+                        // Show the recommended model
+                        const recommended = generateModels.find(m => m.name.includes('gemini-pro')) || generateModels[0];
+                        output += `"${recommended.name}"\n\n`;
+                        output += `Example URL:\nhttps://generativelanguage.googleapis.com/v1/${recommended.name}:generateContent?key=YOUR_KEY`;
+                    }
+                    
+                    output += '\n\n' + '=' .repeat(60) + '\n\n';
+                    output += `📋 ALL MODELS (Full Details):\n\n${JSON.stringify(data.models, null, 2)}`;
+                    
+                    resultDiv.textContent = output;
+                } else {
+                    resultDiv.className = 'error';
+                    resultDiv.textContent = `⚠️ NO MODELS FOUND\n\n📋 Response:\n${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                console.error('Request failed:', error);
+                resultDiv.className = 'error';
+                resultDiv.textContent = `❌ REQUEST FAILED\n\nError: ${error.message}\n\n📋 Full Error:\n${error.stack || error}`;
+            }
+        }
+        
+        // Auto-load API key from localStorage
+        window.addEventListener('load', () => {
+            const storedKey = localStorage.getItem('gemini_api_key');
+            if (storedKey) {
+                document.getElementById('apiKey').value = storedKey;
+            }
+        });
+    </script>
+</body>
+</html>

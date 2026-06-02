@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini API Simple Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .success {
+            background: #d4edda;
+            border: 2px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .error {
+            background: #f8d7da;
+            border: 2px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .info {
+            background: #d1ecf1;
+            border: 2px solid #bee5eb;
+            color: #0c5460;
+        }
+        
+        .loading {
+            background: #fff3cd;
+            border: 2px solid #ffeaa7;
+            color: #856404;
+        }
+        
+        .result-title {
+            font-weight: 700;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        pre {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        
+        .steps {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e0e0e0;
+        }
+        
+        .step {
+            margin-bottom: 15px;
+            padding-left: 30px;
+            position: relative;
+        }
+        
+        .step::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .step strong {
+            color: #667eea;
+        }
+        
+        a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔑 Gemini API Test</h1>
+        <p class="subtitle">Test your Google Gemini API key directly</p>
+        
+        <div class="input-group">
+            <label for="apiKey">Your API Key</label>
+            <input 
+                type="password" 
+                id="apiKey" 
+                placeholder="AIza..."
+                autocomplete="off"
+            >
+        </div>
+        
+        <div class="button-group">
+            <button class="btn-primary" onclick="testAPI()" id="testBtn">
+                Test Connection
+            </button>
+            <button class="btn-secondary" onclick="listModels()" id="listBtn">
+                List Models
+            </button>
+        </div>
+        
+        <div id="result"></div>
+        
+        <div class="steps">
+            <h3 style="margin-bottom: 15px; color: #333;">Quick Setup:</h3>
+            <div class="step">
+                <strong>Get API Key:</strong> <a href="https://aistudio.google.com/app/apikey" target="_blank">https://aistudio.google.com/app/apikey</a>
+            </div>
+            <div class="step">
+                <strong>Enable API:</strong> <a href="https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com" target="_blank">Enable Generative Language API</a>
+            </div>
+            <div class="step">
+                <strong>Wait:</strong> After enabling, wait 2-5 minutes for activation
+            </div>
+            <div class="step">
+                <strong>Test:</strong> Paste your key above and click "Test Connection"
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const resultDiv = document.getElementById('result');
+        const testBtn = document.getElementById('testBtn');
+        const listBtn = document.getElementById('listBtn');
+
+        function showResult(type, title, message, data = null) {
+            let html = `
+                <div class="result ${type}">
+                    <div class="result-title">${title}</div>
+                    <div>${message}</div>
+                    ${data ? `<pre>${JSON.stringify(data, null, 2)}</pre>` : ''}
+                </div>
+            `;
+            resultDiv.innerHTML = html;
+        }
+
+        async function listModels() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            
+            if (!apiKey) {
+                showResult('error', '❌ No API Key', 'Please enter your API key first.');
+                return;
+            }
+
+            if (!apiKey.startsWith('AIza')) {
+                showResult('error', '❌ Invalid Format', 'API keys should start with "AIza". Please check your key.');
+                return;
+            }
+
+            listBtn.disabled = true;
+            listBtn.innerHTML = '<span class="spinner"></span>Listing...';
+            
+            showResult('loading', '⏳ Loading...', 'Fetching available models from Google...');
+
+            try {
+                const versions = ['v1beta', 'v1'];
+                const allModels = [];
+
+                for (const version of versions) {
+                    try {
+                        const url = `https://generativelanguage.googleapis.com/${version}/models?key=${apiKey}`;
+                        const response = await fetch(url);
+                        const data = await response.json();
+
+                        if (data.error) {
+                            console.error(`Error listing ${version} models:`, data.error);
+                            continue;
+                        }
+
+                        if (data.models && Array.isArray(data.models)) {
+                            data.models.forEach(model => {
+                                if (model.supportedGenerationMethods?.includes('generateContent')) {
+                                    allModels.push({
+                                        version: version,
+                                        name: model.name,
+                                        displayName: model.displayName || model.name,
+                                    });
+                                }
+                            });
+                        }
+                    } catch (error) {
+                        console.error(`Error fetching ${version} models:`, error);
+                    }
+                }
+
+                if (allModels.length > 0) {
+                    const modelsList = allModels.map(m => 
+                        `<div style="margin: 5px 0;">✅ ${m.version}: ${m.displayName}</div>`
+                    ).join('');
+                    
+                    showResult('success', 
+                        `✅ Found ${allModels.length} Models`, 
+                        `Your API key is valid and can access these models:<br><br>${modelsList}`
+                    );
+                } else {
+                    showResult('error', 
+                        '⚠️ No Models Found', 
+                        'No models are available. This usually means:<br><br>' +
+                        '1. The Generative Language API is not enabled<br>' +
+                        '2. The API was just enabled and needs 2-5 minutes to activate<br>' +
+                        '3. Your API key has restrictions<br><br>' +
+                        'Please enable the API and wait a few minutes.'
+                    );
+                }
+
+            } catch (error) {
+                showResult('error', '❌ Error', `Failed to list models: ${error.message}`);
+            } finally {
+                listBtn.disabled = false;
+                listBtn.textContent = 'List Models';
+            }
+        }
+
+        async function testAPI() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            
+            if (!apiKey) {
+                showResult('error', '❌ No API Key', 'Please enter your API key first.');
+                return;
+            }
+
+            if (!apiKey.startsWith('AIza')) {
+                showResult('error', '❌ Invalid Format', 'API keys should start with "AIza". Please check your key.');
+                return;
+            }
+
+            if (apiKey.length < 30) {
+                showResult('error', '❌ Too Short', 'API keys are typically 39 characters long. Your key seems incomplete.');
+                return;
+            }
+
+            testBtn.disabled = true;
+            testBtn.innerHTML = '<span class="spinner"></span>Testing...';
+            
+            showResult('loading', '⏳ Testing...', 'Step 1: Discovering available models...');
+
+            // Step 1: Discover available models
+            let availableModels = [];
+            try {
+                const versions = ['v1beta', 'v1'];
+
+                for (const version of versions) {
+                    try {
+                        const url = `https://generativelanguage.googleapis.com/${version}/models?key=${apiKey}`;
+                        const response = await fetch(url);
+                        const data = await response.json();
+
+                        if (data.error) {
+                            if (data.error.message.includes('API key not valid')) {
+                                showResult('error', 
+                                    '❌ Invalid API Key', 
+                                    'Your API key is not valid. Please:<br><br>' +
+                                    '1. Double-check you copied the entire key<br>' +
+                                    '2. Make sure there are no spaces<br>' +
+                                    '3. Create a new key at <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a>'
+                                );
+                                testBtn.disabled = false;
+                                testBtn.textContent = 'Test Connection';
+                                return;
+                            }
+                            continue;
+                        }
+
+                        if (data.models && Array.isArray(data.models)) {
+                            data.models.forEach(model => {
+                                if (model.supportedGenerationMethods?.includes('generateContent')) {
+                                    const modelName = model.name.replace('models/', '');
+                                    availableModels.push({ version, model: modelName });
+                                    console.log(`✅ Found: ${version}/${modelName}`);
+                                }
+                            });
+                        }
+                    } catch (error) {
+                        console.error(`Error listing ${version} models:`, error);
+                    }
+                }
+            } catch (error) {
+                console.error('Error discovering models:', error);
+            }
+
+            // Check if we found any models
+            if (availableModels.length === 0) {
+                showResult('error', 
+                    '⚠️ No Models Available', 
+                    'No models are available. This means:<br><br>' +
+                    '1. The Generative Language API is NOT enabled<br>' +
+                    '2. The API was just enabled and needs 2-5 more minutes<br>' +
+                    '3. Your API key has restrictions<br><br>' +
+                    'Please:<br>' +
+                    '• Enable at: <a href="https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com" target="_blank">Click here</a><br>' +
+                    '• Wait 5 full minutes after enabling<br>' +
+                    '• Remove all restrictions from your API key<br>' +
+                    '• Try again'
+                );
+                testBtn.disabled = false;
+                testBtn.textContent = 'Test Connection';
+                return;
+            }
+
+            console.log(`📋 Found ${availableModels.length} available models`);
+            
+            // Sort models by priority (stable first)
+            availableModels.sort((a, b) => {
+                const getPriority = (model) => {
+                    if (model.includes('1.5-flash') && !model.includes('preview')) return 100;
+                    if (model.includes('1.0-pro') && !model.includes('preview')) return 95;
+                    if (model.includes('1.5-pro') && !model.includes('preview')) return 90;
+                    if (model === 'gemini-pro') return 85;
+                    if (model.includes('preview')) return 30;
+                    return 50;
+                };
+                return getPriority(b.model) - getPriority(a.model);
+            });
+            
+            console.log('📊 Models sorted by priority (stable first)');
+            showResult('loading', '⏳ Testing...', `Step 2: Testing with ${availableModels[0].model} (most stable)...`);
+
+            // Step 2: Test with the first available model
+            let quotaExceededCount = 0;
+            let quotaModels = [];
+            
+            for (const config of availableModels) {
+                try {
+                    console.log(`Testing ${config.version}/models/${config.model}...`);
+                    showResult('loading', '⏳ Testing...', `Step 2: Testing ${config.model}...`);
+                    
+                    const url = `https://generativelanguage.googleapis.com/${config.version}/models/${config.model}:generateContent?key=${apiKey}`;
+                    
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [{ text: 'Say "Hello! Your API is working!" in a friendly way.' }]
+                            }],
+                            generationConfig: {
+                                temperature: 0.7,
+                                maxOutputTokens: 100,
+                            }
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.error) {
+                        console.error(`${config.model} error:`, data.error.message);
+                        
+                        // Check for quota exceeded
+                        if (data.error.message.includes('quota') || 
+                            data.error.message.includes('RESOURCE_EXHAUSTED') ||
+                            data.error.status === 'RESOURCE_EXHAUSTED') {
+                            quotaExceededCount++;
+                            quotaModels.push(config.model);
+                            console.warn(`⚠️ Quota exceeded for ${config.model}, trying next...`);
+                            continue;
+                        }
+                        
+                        // Check for overloaded
+                        if (data.error.message.includes('overloaded') || 
+                            data.error.message.includes('OVERLOADED') ||
+                            data.error.status === 'UNAVAILABLE' ||
+                            response.status === 503) {
+                            console.warn(`🚦 Model ${config.model} is overloaded, trying next...`);
+                            continue;
+                        }
+                        
+                        continue; // Try next model for other errors
+                    }
+
+                    // Success!
+                    if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
+                        const responseText = data.candidates[0].content.parts[0].text;
+                        const modelsList = availableModels.map(m => `✅ ${m.version}/${m.model}`).join('<br>');
+                        
+                        let successMessage = `<strong>Your API is working perfectly!</strong><br><br>` +
+                            `<strong>Using model:</strong> ${config.version}/${config.model}<br><br>` +
+                            `<strong>Response:</strong> "${responseText}"<br><br>`;
+                        
+                        if (quotaExceededCount > 0) {
+                            successMessage += `<strong>Note:</strong> ${quotaExceededCount} model(s) hit quota, but this one works!<br><br>`;
+                        }
+                        
+                        successMessage += `<strong>Available models (${availableModels.length}):</strong><br>${modelsList}<br><br>` +
+                            `You can now use this API key in Tod AI! 🎉`;
+                        
+                        showResult('success', '✅ Connection Successful!', successMessage);
+                        testBtn.disabled = false;
+                        testBtn.textContent = 'Test Connection';
+                        return;
+                    }
+
+                } catch (error) {
+                    console.error(`Error testing ${config.model}:`, error);
+                }
+            }
+
+            // All models failed - check reasons and provide specific guidance
+            let overloadedCount = 0;
+            let overloadedModels = [];
+            
+            // Count overloaded models (we didn't track this in the loop, but we can estimate)
+            // For now, show helpful messages based on what we know
+            
+            if (quotaExceededCount === availableModels.length) {
+                // All quota exceeded
+                showResult('error', 
+                    '🚨 All Models Quota Exceeded', 
+                    `<strong>All ${availableModels.length} models have exceeded their quota.</strong><br><br>` +
+                    `<strong>💡 QUICK FIX (2 minutes):</strong><br><br>` +
+                    `1. Go to: <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a><br>` +
+                    `2. Click "Create API Key"<br>` +
+                    `3. Select "Create API key in <strong>NEW PROJECT</strong>"<br>` +
+                    `4. Copy the new key and paste here<br><br>` +
+                    `<strong>✨ Each new project gets fresh quota limits!</strong><br><br>` +
+                    `Alternative: Wait 1-2 hours for quota to reset.<br><br>` +
+                    `Models that hit quota: ${quotaModels.join(', ')}`
+                );
+            } else if (quotaExceededCount > 0) {
+                // Some quota, some other issues
+                let errorMsg = `<strong>Found ${availableModels.length} model(s) but none worked.</strong><br><br>`;
+                
+                errorMsg += `<strong>${quotaExceededCount} model(s) hit quota limits.</strong><br><br>` +
+                    `<strong>💡 Recommended Solutions:</strong><br><br>` +
+                    `<strong>1. Create new API key (fixes quota):</strong><br>` +
+                    `• <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a><br>` +
+                    `• "Create API key in NEW PROJECT"<br><br>` +
+                    `<strong>2. Wait & Retry (if models overloaded):</strong><br>` +
+                    `• Wait 30-60 seconds<br>` +
+                    `• Models may have been overloaded<br>` +
+                    `• Try again<br><br>` +
+                    `Models with quota issues: ${quotaModels.join(', ')}<br><br>` +
+                    `Other models may be temporarily overloaded or unavailable.`;
+                
+                showResult('error', '⚠️ Multiple Issues Detected', errorMsg);
+            } else {
+                // No quota issues - likely all overloaded or other problems
+                let errorMsg = `<strong>Found ${availableModels.length} model(s) but none worked.</strong><br><br>`;
+                
+                errorMsg += `<strong>💡 Most Likely Causes:</strong><br><br>` +
+                    `<strong>1. Models Overloaded (Most Common):</strong><br>` +
+                    `• Google's servers experiencing high traffic<br>` +
+                    `• <strong>Wait 30-60 seconds and try again</strong><br>` +
+                    `• Usually clears quickly!<br><br>` +
+                    `<strong>2. API Still Activating:</strong><br>` +
+                    `• Wait 5 more minutes if just enabled<br><br>` +
+                    `<strong>3. Temporary Server Issues:</strong><br>` +
+                    `• Check <a href="https://status.cloud.google.com/" target="_blank">Google Cloud Status</a><br><br>` +
+                    `<strong>⏰ Try again in 30-60 seconds - this is usually temporary!</strong>`;
+                
+                showResult('error', '🚦 Models Temporarily Unavailable', errorMsg);
+            }
+
+            testBtn.disabled = false;
+            testBtn.textContent = 'Test Connection';
+        }
+
+        // Allow Enter key to test
+        document.getElementById('apiKey').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') testAPI();
+        });
+    </script>
+</body>
+</html>
