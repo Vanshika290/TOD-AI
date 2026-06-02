@@ -40,7 +40,7 @@ import { Badge } from '../ui/badge';
 import { Progress } from '../ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { callGeminiAPI } from '../../utils/gemini-api';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 interface CourseLibraryProps {
   onBack: () => void;
